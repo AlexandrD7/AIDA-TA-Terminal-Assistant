@@ -1,0 +1,131 @@
+{
+  "model": {
+    "name": "",
+    "description": "",
+    "size": "",
+    "context_size": 4096,
+    "format": "hf",  
+    "gguf_path": null,
+    "gguf_filename": null,
+    "gguf_download_url": null,
+    "fallback_to_hf": true,
+    "local_path": "",
+    "use_local": true,
+    "fallback_to_remote": true,
+    "integrity_check": true
+  },
+  "chat_template_system": {
+    "enabled": false,
+    "force_override": false,
+    "detection_mode": "smart",
+    "fallback_strategy": "generic",
+    "validation": {
+      "syntax_check": true,
+      "performance_test": false
+    }
+  },
+  "chat_templates": {
+    "starcoder2": {
+      "template": "{% for message in messages %}{% if message['role'] == 'system' %}<|system|>\n{{ message['content'] }}{% elif message['role'] == 'user' %}<|user|>\n{{ message['content'] }}{% elif message['role'] == 'assistant' %}<|assistant|>\n{{ message['content'] }}{% endif %}<|end|>\n{% endfor %}<|assistant|>\n",
+      "stop_tokens": ["<|end|>", "<|user|>", "<|system|>"],
+      "add_generation_prompt": false,
+      "strip_whitespace": true,
+      "max_context_optimization": true
+  },
+  "generic": {
+    "template": "{% for message in messages %}{% if message['role'] == 'system' %}System: {{ message['content'].strip() }}\n\n{% elif message['role'] == 'user' %}User: {{ message['content'].strip() }}\n\n{% elif message['role'] == 'assistant' %}Assistant: {{ message['content'].strip() }}\n\n{% endif %}{% endfor %}Assistant: ",
+    "stop_tokens": ["User:", "System:", "\nUser:", "\nSystem:"],
+    "add_generation_prompt": false,
+    "strip_whitespace": true,
+    "max_context_optimization": false
+ },
+ "code_focused": {
+    "template": "{% for message in messages %}{% if message['role'] == 'system' %}# SYSTEM: {{ message['content'].strip() }}\n\n{% elif message['role'] == 'user' %}## ЗАДАЧА:\n{{ message['content'].strip() }}\n\n{% elif message['role'] == 'assistant' %}## РЕШЕНИЕ:\n{{ message['content'].strip() }}\n\n{% endif %}{% endfor %}## РЕШЕНИЕ:\n",
+    "stop_tokens": ["## ЗАДАЧА:", "# SYSTEM:", "\n## ЗАДАЧА:", "\n# SYSTEM:"],
+    "add_generation_prompt": false,
+    "strip_whitespace": true,
+    "max_context_optimization": true
+  }
+  },
+  "gguf_settings": {
+    "n_gpu_layers": 10,
+    "n_ctx": 4096,
+    "n_batch": 512,
+    "verbose": false,
+    "n_threads": 8,
+    "n_threads_batch": 8,
+    "mul_mat_q": true,
+    "f16_kv": true,
+    "use_mmap": true,
+    "use_mlock": false,
+    "chat_format": "chatml",
+    "seed": -1,
+    "temp": 0.7,
+    "top_p": 0.95,
+    "top_k": 50,
+    "repeat_penalty": 1.1,
+    "repeat_last_n": 64,
+    "penalize_nl": true
+  },
+  "gguf_optimization": {
+    "flash_attention": false
+  },
+  "settings": {
+    "device": "cuda",
+    "cache_dir": "/home/mrenot/models/",
+    "dtype": "bfloat16",
+    "quantization_type": null,
+    "trust_remote_code": false,
+    "low_cpu_mem_usage": true,
+    "torch_compile": false,
+    "pad_token_strategy": "unique",
+    "default_chat_template": "generic"
+  },
+  "generation": {
+    "max_new_tokens": 1500,
+    "temperature": 0.15,
+    "top_p": 0.92,
+    "top_k": 45,
+    "repetition_penalty": 1.08,
+    "no_repeat_ngram_size": 4,
+    "do_sample": true,
+    "early_stopping": false,
+    "num_beams": 1,
+    "pad_token_id": null,
+    "length_penalty": 1.0,
+    "bad_words_ids": null
+  },
+  "performance": {
+    "max_history": 75,
+    "context_window": 6,
+    "gradient_checkpointing": false,
+    "compile_mode": "default",
+    "max_response_length": 32768,
+    "max_context_length": 4096
+  },
+  "monitoring": {
+    "enable_metrics": true,
+    "memory_monitoring": true,
+    "performance_tracking": true,
+    "error_reporting": true,
+    "metrics_retention": 2500,
+    "alert_thresholds": {
+      "inference_latency_ms": 4000,
+      "memory_usage_mb": 8192,
+      "min_tokens_per_second": 15
+    }
+  },
+  "optimization": {
+    "adaptive_memory": true,
+    "auto_device_map": true,
+    "memory_cleanup": true,
+    "cache_optimization": true,
+    "memory_efficient_attention": false
+  },
+  "text_processing": {
+    "unicode_normalization": "NFC",
+    "max_input_length": 6144,
+    "sanitize_surrogates": true,
+    "encoding_fallback": "utf-8"
+  }
+}
