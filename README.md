@@ -59,7 +59,7 @@ AIDA решает эти проблемы, предоставляя:
 
 Конфигурация доступна по адресу
 ```bash
-`https://alexandrd7.github.io/AIDA-TA-Terminal-Assistant/`
+https://alexandrd7.github.io/AIDA-TA-Terminal-Assistant/
 ```
 # 💻 Системные требования
 
