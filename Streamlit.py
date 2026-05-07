@@ -48,7 +48,7 @@ class SystemMetrics:
     gpu_percent: Optional[float]
     disk_percent: float
     timestamp: datetime
-    
+
 @dataclass
 class ModelConfiguration:
     """Конфигурация модели с валидацией"""
@@ -57,7 +57,7 @@ class ModelConfiguration:
     max_new_tokens: Optional[int] = None
     model_name: Optional[str] = None
     device: Optional[str] = None
-    
+
     def is_valid(self) -> bool:
         """Валидация конфигурации"""
         logger.info(f"Проверка конфигурации модели: dtype={self.dtype}, quantization={self.quantization}, max_new_tokens={self.max_new_tokens}")
@@ -97,7 +97,15 @@ def import_assistant_modules():
         return EnhancedCodeAssistant, GenerationMetrics
     except ImportError as e:
         logger.error(f"Ошибка импорта модулей AIDA: {e}")
-        st.error("Не удалось импортировать модули AIDA. Убедитесь, что файл fixed_aida_code3.py находится в той же директории.")
+        st.error(
+            f"❌ Не удалось импортировать модули AIDA.\n\n"
+            f"**Причина:** `{e}`\n\n"
+            f"Убедитесь, что файл **Aida.py** находится в той же директории, "
+            f"что и Streamlit.py, и что все зависимости установлены."
+        )
+        with st.expander("🔧 Подробности"):
+            import traceback
+            st.code(traceback.format_exc(), language="python")
         st.stop()
 
 EnhancedCodeAssistant, GenerationMetrics = import_assistant_modules()
@@ -126,7 +134,7 @@ CUSTOM_CSS = """
         border-radius: 10px;
         margin-bottom: 2rem;
     }
-    
+
     .metric-card {
         background: #f8f9fa;
         padding: 1rem;
@@ -135,7 +143,7 @@ CUSTOM_CSS = """
         margin: 0.5rem 0;
         color: #333 !important;
     }
-    
+
     .status-indicator {
         display: inline-block;
         width: 12px;
@@ -143,17 +151,17 @@ CUSTOM_CSS = """
         border-radius: 50%;
         margin-right: 8px;
     }
-    
+
     .status-ready { background-color: #28a745; }
     .status-loading { background-color: #ffc107; animation: pulse 1s infinite; }
     .status-error { background-color: #dc3545; }
-    
+
     @keyframes pulse {
         0% { opacity: 1; }
         50% { opacity: 0.5; }
         100% { opacity: 1; }
     }
-    
+
     .progress-bar {
         background-color: #e9ecef;
         border-radius: 4px;
@@ -161,13 +169,13 @@ CUSTOM_CSS = """
         height: 8px;
         margin: 0.5rem 0;
     }
-    
+
     .progress-fill {
         background-color: #007bff;
         height: 100%;
         transition: width 0.3s ease;
     }
-    
+
     .warning-box {
         background-color: #fff3cd;
         border: 1px solid #ffeaa7;
@@ -176,7 +184,7 @@ CUSTOM_CSS = """
         margin: 0.5rem 0;
         color: #856404;
     }
-    
+
     .task-section {
         background: white;
         padding: 1.5rem;
@@ -186,7 +194,7 @@ CUSTOM_CSS = """
         word-wrap: break-word;
         overflow-wrap: break-word;
     }
-    
+
     .config-section {
         background: #f8f9fa;
         border: 1px solid #dee2e6;
@@ -194,7 +202,7 @@ CUSTOM_CSS = """
         padding: 1rem;
         margin: 1rem 0;
     }
-    
+
     .error-section {
         background: #f8d7da;
         border: 1px solid #f5c6cb;
@@ -335,7 +343,7 @@ CUSTOM_CSS = """
 class EnhancedAidaWebInterface:
     """
     Production-ready веб-интерфейс для AIDA Code Assistant
-    
+
     Архитектурные принципы:
     - Разделение ответственности через композицию
     - Comprehensive error handling
@@ -343,7 +351,7 @@ class EnhancedAidaWebInterface:
     - Кэширование для производительности
     - Graceful degradation
     """
-    
+
     def __init__(self):
         """Инициализация с проверкой зависимостей"""
         self._initialize_session_state()
@@ -378,7 +386,7 @@ class EnhancedAidaWebInterface:
         for key, value in default_states.items():
             if key not in st.session_state:
                 st.session_state[key] = value
-   
+
     def load_model(self):
         """Метод для загрузки модели и обновления состояния."""
         try:
@@ -437,7 +445,7 @@ class EnhancedAidaWebInterface:
         except Exception as e:
             logger.error(f"Ошибка в операции {operation_name}: {e}")
             st.error(f"Ошибка {operation_name}: {str(e)}")
-            
+
             # Debug информация в development режиме
             if st.session_state.get('debug_mode', False):
                 st.text_area("Stack trace:", traceback.format_exc(), height=200)
@@ -457,7 +465,7 @@ class EnhancedAidaWebInterface:
         try:
             if not st.session_state.assistant:
                 return None
-                
+
             # Позволяем получать конфигурацию после инициализации ассистента
             config = st.session_state.assistant.get_display_configuration()
 
@@ -480,7 +488,7 @@ class EnhancedAidaWebInterface:
             ram = psutil.virtual_memory()
             cpu_percent = psutil.cpu_percent(interval=0.1)
             disk = psutil.disk_usage('/')
-            
+
             gpu_percent = None
             if gpu_available:
                 try:
@@ -507,10 +515,10 @@ class EnhancedAidaWebInterface:
     def _check_system_resources(self) -> List[str]:
         """Проверка системных ресурсов и генерация предупреждений"""
         warnings = []
-        
+
         try:
             metrics = self._get_system_metrics()
-            
+
             # Проверка критических пороговых значений
             if metrics.ram_percent > 90:
                 warnings.append(f"⚠️ Критическое использование RAM: {metrics.ram_percent:.1f}%")
@@ -557,12 +565,12 @@ class EnhancedAidaWebInterface:
                     logger.info(f"Текущий статус загрузки: {st.session_state.loading_status}, Модель загружена: {st.session_state.model_loaded}")
                     success = st.session_state.assistant.load_model()
                     load_time = time.time() - start_time
-                    
+
                     st.session_state.model_loaded = success
                     st.session_state.loading_status = (
                         ModelStatus.LOADED.value if success else ModelStatus.ERROR.value
                     )
-                    
+
                     if success:
                         logger.info(f"Модель успешно загружена за {load_time:.2f}с")
                         # Очистка кэша конфигурации для принудительного перезапроса
@@ -572,7 +580,7 @@ class EnhancedAidaWebInterface:
                     else:
                         st.session_state.loading_error = "Не удалось загрузить модель"
                         logger.error("Ошибка загрузки модели")
-                        
+
                 except Exception as e:
                     st.session_state.loading_status = ModelStatus.ERROR.value
                     st.session_state.loading_error = str(e)
@@ -583,7 +591,7 @@ class EnhancedAidaWebInterface:
 
     def _render_model_configuration(self) -> None:
         """Production-ready рендеринг конфигурации модели с правильной валидацией"""
-        
+
         # КРИТИЧЕСКАЯ ВАЛИДАЦИЯ: проверяем состояние модели
         if not self._validate_model_state():
             if st.session_state.loading_status == ModelStatus.LOADING.value:
@@ -596,13 +604,13 @@ class EnhancedAidaWebInterface:
 
         with self._error_boundary("рендеринг конфигурации модели"):
             config_dict = self._get_cached_model_configuration()
-            
+
             if not config_dict:
                 st.warning("⚠️ Конфигурация модели недоступна")
                 return
 
             config = ModelConfiguration(**{
-                k: v for k, v in config_dict.items() 
+                k: v for k, v in config_dict.items()
                 if k in ModelConfiguration.__annotations__
             })
 
@@ -612,21 +620,21 @@ class EnhancedAidaWebInterface:
 
             st.markdown('<div class="config-section">', unsafe_allow_html=True)
             st.subheader("⚙️ Параметры модели")
-            
+
             # Основные параметры с валидацией
             if config.dtype:
                 st.write(f"**Тип данных:** `{config.dtype}`")
-            
+
             if config.quantization is not None:
                 quant_status = "✅ " + str(config.quantization) if config.quantization else "❌ Отключена"
                 st.write(f"**Квантизация:** {quant_status}")
-                
+
             if config.max_new_tokens:
                 st.write(f"**Макс. токены:** {config.max_new_tokens:,}")
-                
+
             if config.model_name:
                 st.write(f"**Модель:** {config.model_name}")
-                
+
             if config.device:
                 st.write(f"**Устройство:** {config.device}")
 
@@ -637,33 +645,33 @@ class EnhancedAidaWebInterface:
             if st.session_state.get('debug_mode', False):
                 with st.expander("🔧 Debug конфигурации"):
                     st.json(config_dict)
-                    
+
             st.markdown('</div>', unsafe_allow_html=True)
 
     def _render_system_monitoring(self) -> None:
         """Enhanced система мониторинга ресурсов"""
         with self._error_boundary("мониторинг системы"):
             metrics = self._get_system_metrics()
-            
+
             # Основные метрики
             col1, col2, col3, col4 = st.columns(4)
-            
+
             with col1:
                 st.metric(
-                    "RAM", 
+                    "RAM",
                     f"{metrics.ram_percent:.1f}%",
                     help=f"Обновлено: {metrics.timestamp.strftime('%H:%M:%S')}"
                 )
-                
+
             with col2:
                 st.metric("CPU", f"{metrics.cpu_percent:.1f}%")
-                
+
             with col3:
                 if metrics.gpu_percent is not None:
                     st.metric("GPU", f"{metrics.gpu_percent:.1f}%")
                 else:
                     st.metric("GPU", "N/A")
-                    
+
             with col4:
                 st.metric("Диск", f"{metrics.disk_percent:.1f}%")
 
@@ -764,7 +772,7 @@ class EnhancedAidaWebInterface:
         """Рендеринг статистики сессии"""
         if st.session_state.conversation_history:
             st.subheader("📊 Статистика сессии")
-            
+
             total_tasks = len(st.session_state.conversation_history)
             st.metric("Всего задач", total_tasks)
 
@@ -811,7 +819,7 @@ class EnhancedAidaWebInterface:
         # Интерфейс с вкладками
         tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
             "✨ Генерация кода",
-            "🔍 Анализ кода", 
+            "🔍 Анализ кода",
             "🛠️ Исправление кода",
             "📚 Объяснение кода",
             "🧠 Свободный режим",
@@ -857,7 +865,7 @@ class EnhancedAidaWebInterface:
                 "html", "css", "sql", "bash", "r", "matlab", "lua"
             ]
             language = st.selectbox("🔧 Язык программирования:", languages)
-            
+
             # Дополнительные опции
             include_tests = st.checkbox("🧪 Включить тесты", help="Генерировать unit тесты для кода")
             include_docs = st.checkbox("📚 Включить документацию", help="Добавить docstrings и комментарии")
@@ -867,17 +875,17 @@ class EnhancedAidaWebInterface:
                 with self._error_boundary("генерация кода"):
                     with st.spinner("🤖 Аида генерирует код..."):
                         start_time = time.time()
-                        
+
                         # Расширенный промпт с опциями
                         enhanced_task = task
                         if include_tests:
                             enhanced_task += "\n\n🧪 ВАЖНО: Также включи comprehensive unit тесты с использованием подходящего фреймворка для тестирования."
                         if include_docs:
                             enhanced_task += "\n\n📚 ВАЖНО: Добавь детальную документацию, docstrings и комментарии, объясняющие логику работы."
-                        
+
                         result = st.session_state.assistant.generate_code(enhanced_task, language)
                         duration = (time.time() - start_time) * 1000
-                        
+
                         self._save_interaction(
                             task, result, TaskType.CODE_GENERATION.value, duration
                         )
@@ -932,14 +940,14 @@ class EnhancedAidaWebInterface:
 
             if code_input_method == "📝 Текстовое поле":
                 code = st.text_area(
-                    "Код для анализа:", 
-                    height=250, 
+                    "Код для анализа:",
+                    height=250,
                     placeholder="Вставьте ваш код здесь...",
                     help="Поддерживаются все основные языки программирования"
                 )
             else:
                 uploaded_file = st.file_uploader(
-                    "Выберите файл с кодом:", 
+                    "Выберите файл с кодом:",
                     type=['py', 'js', 'ts', 'java', 'cpp', 'c', 'cs', 'go', 'rs', 'php', 'rb', 'html', 'css'],
                     help="Максимальный размер файла: 200MB"
                 )
@@ -952,14 +960,14 @@ class EnhancedAidaWebInterface:
                         else:
                             code = uploaded_file.read().decode('utf-8')
                             st.success(f"✅ Файл загружен: {uploaded_file.name} ({len(code)} символов)")
-                            
+
                             # Предварительный просмотр
                             with st.expander("👁️ Предварительный просмотр"):
                                 preview_lines = code.split('\n')[:20]
                                 st.code('\n'.join(preview_lines), language='python')
                                 if len(code.split('\n')) > 20:
                                     st.info(f"... и еще {len(code.splitlines()) - 20} строк")
-                                    
+
                     except UnicodeDecodeError:
                         st.error("❌ Ошибка кодировки файла. Убедитесь, что файл в UTF-8")
                     except Exception as e:
@@ -968,7 +976,7 @@ class EnhancedAidaWebInterface:
         with col2:
             languages = ["python", "javascript", "typescript", "java", "c++", "c#", "go", "rust", "php", "ruby"]
             language = st.selectbox("🔧 Язык:", languages, key="analyze_lang")
-            
+
             # Опции анализа
             st.write("**Опции анализа:**")
             check_security = st.checkbox("🔒 Анализ безопасности", value=True)
@@ -981,7 +989,7 @@ class EnhancedAidaWebInterface:
                 with self._error_boundary("анализ кода"):
                     with st.spinner("🤖 Аида анализирует код..."):
                         start_time = time.time()
-                        
+
                         # Формирование расширенного запроса с учётом опций
                         analysis_options = []
                         if check_security:
@@ -992,7 +1000,7 @@ class EnhancedAidaWebInterface:
                             analysis_options.append("🎨 стиль кода и соответствие стандартам")
                         if check_complexity:
                             analysis_options.append("🧮 сложность кода и архитектура")
-                        
+
                         # Создаем полный запрос на анализ
                         if analysis_options:
                             analysis_prompt = f"Выполни детальный анализ следующего кода на языке {language} с особым фокусом на:\n\n{chr(10).join(analysis_options)}\n\nКод для анализа:\n\n{code}"
@@ -1008,7 +1016,7 @@ class EnhancedAidaWebInterface:
 
                         st.markdown("### 📋 Результат анализа:")
                         st.markdown(result)
-                        
+
                         # Метрики анализа
                         col_metrics1, col_metrics2, col_metrics3 = st.columns(3)
                         with col_metrics1:
@@ -1038,12 +1046,12 @@ class EnhancedAidaWebInterface:
 
         with col1:
             code = st.text_area(
-                "Код для исправления:", 
-                height=250, 
+                "Код для исправления:",
+                height=250,
                 placeholder="Вставьте код с ошибками или требующий улучшения...",
                 help="Опишите проблему в комментариях, если она не очевидна"
             )
-            
+
             # Дополнительное описание проблемы
             problem_description = st.text_area(
                 "📝 Описание проблемы (опционально):",
@@ -1054,7 +1062,7 @@ class EnhancedAidaWebInterface:
         with col2:
             languages = ["python", "javascript", "typescript", "java", "c++", "c#", "go", "rust", "php", "ruby"]
             language = st.selectbox("🔧 Язык:", languages, key="fix_lang")
-            
+
             # Опции исправления
             st.write("**Типы исправлений:**")
             fix_bugs = st.checkbox("🐛 Исправить баги", value=True)
@@ -1068,7 +1076,7 @@ class EnhancedAidaWebInterface:
                 with self._error_boundary("исправление кода"):
                     with st.spinner("🤖 Аида исправляет код..."):
                         start_time = time.time()
-                        
+
                         # Формирование детального запроса с учётом опций
                         fix_options = []
                         if fix_bugs:
@@ -1081,7 +1089,7 @@ class EnhancedAidaWebInterface:
                             fix_options.append("🛡️ добавление comprehensive error handling и валидации")
                         if modernize_code:
                             fix_options.append("🔄 модернизация с использованием современных практик и паттернов")
-                        
+
                         # Создаем полный запрос на исправление
                         fix_prompt = f"Исправь и улучши следующий код на языке {language}"
                         if fix_options:
@@ -1091,11 +1099,11 @@ class EnhancedAidaWebInterface:
                             fix_prompt += f"\n\nОписание проблемы от пользователя:\n{problem_description}"
 
                         fix_prompt += f"\n\nКод для исправления:\n\n{code}"
-                        
+
                         # Используем расширенный промпт
                         result = st.session_state.assistant.fix_code(fix_prompt, language)
                         duration = (time.time() - start_time) * 1000
-                        
+
                         self._save_interaction(
                             f"Исправление кода ({language})", result, TaskType.CODE_FIXING.value, duration
                         )
@@ -1141,8 +1149,8 @@ class EnhancedAidaWebInterface:
 
         with col1:
             code = st.text_area(
-                "Код для объяснения:", 
-                height=250, 
+                "Код для объяснения:",
+                height=250,
                 placeholder="Вставьте код, который нужно объяснить...",
                 help="Чем сложнее код, тем детальнее будет объяснение"
             )
@@ -1156,7 +1164,7 @@ class EnhancedAidaWebInterface:
                 "С примерами": "объяснение с примерами использования"
             }
             detail_level = st.selectbox("📖 Уровень детализации:", list(detail_levels.keys()))
-            
+
             # Дополнительные опции
             include_diagrams = st.checkbox("📊 Включить диаграммы", help="Добавить ASCII диаграммы для визуализации")
             explain_complexity = st.checkbox("🧮 Объяснить сложность", help="Анализ временной и пространственной сложности")
@@ -1166,7 +1174,7 @@ class EnhancedAidaWebInterface:
                 with self._error_boundary("объяснение кода"):
                     with st.spinner("🤖 Аида объясняет код..."):
                         start_time = time.time()
-                        
+
                         # == Расширенный запрос с учетом всех опций ==
                         enhanced_request = f"Дай {detail_levels[detail_level]} следующего кода"
 
@@ -1180,17 +1188,17 @@ class EnhancedAidaWebInterface:
                             enhanced_request += f", при этом обязательно {', а также '.join(additional_options)}"
 
                         enhanced_request += f":\n\n{code}"
-                        
+
                         result = st.session_state.assistant.explain_code(code, enhanced_request)
                         duration = (time.time() - start_time) * 1000
-                        
+
                         self._save_interaction(
                             f"Объяснение кода ({detail_level})", result, TaskType.CODE_EXPLANATION.value, duration
                         )
 
                         st.markdown("### 💡 Объяснение:")
                         st.markdown(result)
-                        
+
                         # Метрики объяснения
                         col_exp1, col_exp2, col_exp3 = st.columns(3)
                         with col_exp1:
@@ -1230,7 +1238,7 @@ class EnhancedAidaWebInterface:
                 "Расскажи о best practices для code review",
                 "Какие инструменты лучше использовать для CI/CD?"
             ]
-            
+
             for i, prompt in enumerate(quick_prompts):
                 if st.button(f"💭 {prompt}", key=f"quick_{i}"):
                     st.session_state.chat_messages.append({"role": "user", "content": prompt})
@@ -1238,12 +1246,12 @@ class EnhancedAidaWebInterface:
 
         # История чата с улучшенным дизайном
         chat_container = st.container()
-        
+
         with chat_container:
             for i, message in enumerate(st.session_state.chat_messages):
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"])
-                    
+
                     # Дополнительные действия для сообщений ассистента
                     if message["role"] == "assistant" and len(message["content"]) > 100:
                         col1, col2, col3 = st.columns([1, 1, 8])
@@ -1264,7 +1272,7 @@ class EnhancedAidaWebInterface:
         if prompt := st.chat_input("Напишите ваш вопрос... (поддерживаются вопросы по программированию, архитектуре, best practices)"):
             # Добавляем сообщение пользователя
             st.session_state.chat_messages.append({"role": "user", "content": prompt})
-            
+
             with st.chat_message("user"):
                 st.markdown(prompt)
 
@@ -1275,15 +1283,15 @@ class EnhancedAidaWebInterface:
                         start_time = time.time()
                         response = st.session_state.assistant.generate_response(prompt, "free_mode")
                         duration = (time.time() - start_time) * 1000
-                        
+
                         st.markdown(response)
                         st.session_state.chat_messages.append({"role": "assistant", "content": response})
-                        
+
                         self._save_interaction(prompt, response, TaskType.FREE_MODE.value, duration)
-                        
+
                         # Показать время ответа
                         st.caption(f"⏱️ Время ответа: {duration:.0f}мс")
-                        
+
                     except Exception as e:
                         error_msg = f"❌ Ошибка генерации ответа: {str(e)}"
                         st.error(error_msg)
@@ -1291,16 +1299,16 @@ class EnhancedAidaWebInterface:
 
         # Управление чатом
         col1, col2, col3, col4 = st.columns(4)
-        
+
         with col1:
             if st.session_state.chat_messages and st.button("🧹 Очистить чат"):
                 st.session_state.chat_messages = []
                 st.rerun()
-                
+
         with col2:
             if st.session_state.chat_messages and st.button("📄 Экспорт чата"):
                 chat_export = "\n\n".join([
-                    f"**{msg['role'].upper()}:** {msg['content']}" 
+                    f"**{msg['role'].upper()}:** {msg['content']}"
                     for msg in st.session_state.chat_messages
                 ])
                 st.download_button(
@@ -1309,12 +1317,12 @@ class EnhancedAidaWebInterface:
                     file_name=f"aida_chat_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md",
                     mime="text/markdown"
                 )
-                
+
         with col3:
             total_messages = len(st.session_state.chat_messages)
             if total_messages > 0:
                 st.metric("💬 Сообщений", total_messages)
-                
+
         with col4:
             if st.session_state.chat_messages:
                 total_chars = sum(len(msg['content']) for msg in st.session_state.chat_messages)
@@ -1334,7 +1342,7 @@ class EnhancedAidaWebInterface:
                 <p><strong>Что отслеживается:</strong></p>
                 <ul>
                     <li>🔢 Количество и типы выполненных задач</li>
-                    <li>⏱️ Время выполнения операций</li> 
+                    <li>⏱️ Время выполнения операций</li>
                     <li>📊 Производительность системы</li>
                     <li>🎯 Паттерны использования</li>
                 </ul>
@@ -1347,16 +1355,16 @@ class EnhancedAidaWebInterface:
             col1, col2, col3, col4 = st.columns(4)
 
             total_tasks = len(st.session_state.conversation_history)
-            
+
             # Анализ типов задач
             task_types = {}
             total_duration = 0
             successful_tasks = 0
-            
+
             for interaction in st.session_state.conversation_history:
                 task_type = interaction.get('task_type', 'unknown')
                 task_types[task_type] = task_types.get(task_type, 0) + 1
-                
+
                 if 'duration_ms' in interaction:
                     total_duration += interaction['duration_ms']
                 if interaction.get('success', True):
@@ -1380,19 +1388,19 @@ class EnhancedAidaWebInterface:
 
             # Дополнительные метрики
             col5, col6, col7, col8 = st.columns(4)
-            
+
             with col5:
                 session_duration = datetime.now() - st.session_state.session_start
                 st.metric("🕐 Время сессии", f"{int(session_duration.total_seconds() / 60)} мин")
-                
+
             with col6:
                 tasks_per_hour = total_tasks / (session_duration.total_seconds() / 3600) if session_duration.total_seconds() > 0 else 0
                 st.metric("📈 Задач/час", f"{tasks_per_hour:.1f}")
-                
+
             with col7:
                 chat_messages = len(st.session_state.chat_messages)
                 st.metric("💬 Сообщений в чате", chat_messages)
-                
+
             with col8:
                 if hasattr(st.session_state.assistant, 'get_generation_statistics'):
                     gen_stats = st.session_state.assistant.get_generation_statistics()
@@ -1406,7 +1414,7 @@ class EnhancedAidaWebInterface:
             # Визуализации
             if task_types:
                 col_chart1, col_chart2 = st.columns(2)
-                
+
                 with col_chart1:
                     # График распределения типов задач
                     fig_pie = px.pie(
@@ -1428,13 +1436,13 @@ class EnhancedAidaWebInterface:
                                 if task_type not in task_performance:
                                     task_performance[task_type] = []
                                 task_performance[task_type].append(interaction['duration_ms'])
-                        
+
                         # Средняя производительность по типам
                         avg_performance = {
                             task_type.replace('_', ' ').title(): sum(durations) / len(durations)
                             for task_type, durations in task_performance.items()
                         }
-                        
+
                         fig_bar = px.bar(
                             x=list(avg_performance.keys()),
                             y=list(avg_performance.values()),
@@ -1453,7 +1461,7 @@ class EnhancedAidaWebInterface:
                 df_history['minute_bucket'] = (df_history['timestamp'].dt.minute // 10) * 10
 
                 col_time1, col_time2 = st.columns(2)
-                
+
                 with col_time1:
                     # Почасовая активность
                     hourly_activity = df_history.groupby('hour').size().reset_index(name='count')
@@ -1467,7 +1475,7 @@ class EnhancedAidaWebInterface:
                     )
                     fig_timeline.update_layout(showlegend=False)
                     st.plotly_chart(fig_timeline, use_container_width=True)
-                    
+
                 with col_time2:
                     # Тренд производительности
                     if 'duration_ms' in df_history.columns:
@@ -1491,7 +1499,7 @@ class EnhancedAidaWebInterface:
 
             # Системные метрики производительности
             st.subheader("🚀 Метрики производительности модели")
-            
+
             if hasattr(st.session_state.assistant, 'get_generation_statistics'):
                 gen_stats = st.session_state.assistant.get_generation_statistics()
                 if gen_stats and 'error' not in gen_stats:
@@ -1874,5 +1882,5 @@ def main() -> None:
             st.text_area("Full Traceback:", traceback.format_exc(), height=300)
 
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     main()
